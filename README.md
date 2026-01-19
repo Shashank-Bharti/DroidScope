@@ -88,12 +88,11 @@ generating comprehensive analysis reports with real-time execution logs.
 
 <div align="center">
 
-### **3 Commands to Launch**
+### **Commands to Launch**
 
 </div>
 
 ```powershell
-python verify_setup.py    # ✓ Check everything
 python app.py             # 🚀 Start server
 # 🌐 Open http://localhost:5000
 ```
