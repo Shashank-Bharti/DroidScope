@@ -8,9 +8,6 @@ flask
 llama-index-llms-openai-like
 llama-index-core
 
-# Data validation and serialization
-pydantic>=2.0.0
-
 # Environment variable management
 python-dotenv
 

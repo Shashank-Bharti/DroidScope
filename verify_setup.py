@@ -109,7 +109,6 @@ def check_imports():
         'flask': 'Flask',
         'dotenv': 'python-dotenv',
         'llama_index': 'llama-index',
-        'pydantic': 'Pydantic',
         'droidrun': 'DroidRun'
     }
     all_installed = True
