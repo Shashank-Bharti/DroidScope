@@ -1,0 +1,13 @@
+Explore the {app_name} application like a human user.
+Open primary tabs, menus, feeds, profiles, and settings naturally.
+Interact with the interface by tapping, scrolling, and opening context menus to understand how users browse and consume content.
+Avoid destructive or irreversible actions such as logout, account deletion, blocking, posting, or sending messages.
+Navigate as deeply as possible to discover screens reachable through taps, long-presses, or secondary menus.
+Prefer breadth-first exploration before going deeper into a single flow.
+Do not attempt to complete tasks or goals; focus only on structural navigation.
+Record each distinct UI state as a screen with a unique identifier, descriptive name, and navigation depth.
+Record every navigation change as a transition with source screen, destination screen, and the action performed.
+Continue exploration until maximum reasonable depth is reached or no new screens are discovered.
+Generate a complete markdown containing screens, transitions, total screen count, maximum depth, and exploration time.
+Export the generated markdown data to a `.md` file.
+Output markdown only.

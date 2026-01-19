@@ -80,21 +80,29 @@ Analyzes existing `agent_result.txt` and generates HTML report.
 
 ### Change Target Application
 
-Edit `ux_flow_explorer.py`:
+Edit the `APP_NAME` constant in `ux_flow_explorer.py`:
 
 ```python
-agent = DroidAgent(
-    goal="Explore the [YOUR_APP_NAME] application...",
-    config=config,
-    llms=llm,
-)
+APP_NAME = "YourAppName"  # Will be inserted into agent_goal.txt
 ```
+
+Or directly edit `prompts/agent_goal.txt` to fully customize the exploration prompt.
 
 ### Adjust Exploration Parameters
 
+In `ux_flow_explorer.py`:
+
 ```python
-config.agent.max_steps = 110  # Maximum steps for exploration
+MAX_STEPS = 110  # Maximum steps for exploration
+OUTPUT_FILE = "agent_result.txt"  # Output file path
 ```
+
+### Customize Prompts
+
+All prompts are now in the `prompts/` folder for easy editing:
+- **agent_goal.txt** - Controls how the agent explores (supports `{app_name}` variable)
+- **analysis_prompt.txt** - Controls UX analysis criteria (supports `{report_content}` variable)
+- **html_generation_prompt.txt** - Controls HTML report style (supports `{analysis_data}`, `{timestamp}` variables)
 
 ### Change LLM Model
 
@@ -102,7 +110,7 @@ config.agent.max_steps = 110  # Maximum steps for exploration
 llm = OpenAILike(
     model="mistralai/devstral-2512:free",  # Change model here
     api_base="https://openrouter.ai/api/v1",
-    api_key=openrouter_key,
+    api_key=OPENROUTER_KEY,
     temperature=0.2
 )
 ```
@@ -111,13 +119,36 @@ llm = OpenAILike(
 
 ```
 DROIDRUN/
-├── ux_flow_explorer.py    # Main exploration agent
-├── ux_analyzer.py          # UX analysis and HTML generation
-├── requirements.txt        # Python dependencies
-├── .env                    # Environment variables (create this)
-├── .gitignore             # Git ignore rules
-└── trajectories/          # Exploration session data
+├── prompts/                    # Prompt templates
+│   ├── agent_goal.txt         # Exploration goal template
+│   ├── analysis_prompt.txt    # UX analysis instructions
+│   └── html_generation_prompt.txt  # HTML report generation
+├── ux_flow_explorer.py        # Main exploration agent
+├── ux_analyzer.py             # UX analysis and HTML generation
+├── utils.py                   # Shared utility functions
+├── requirements.txt           # Python dependencies
+├── .env                       # Environment variables (create this)
+├── .gitignore                 # Git ignore rules
+└── trajectories/              # Exploration session data
 ```
+
+## Features of New Structure
+
+### ✅ Separated Prompts
+- All prompts moved to `prompts/` folder
+- Easy to edit without touching code
+- Supports variable substitution (e.g., `{app_name}`)
+
+### ✅ Shared Utilities
+- `utils.py` provides common functions
+- `load_prompt()` - Load any prompt file
+- `format_prompt()` - Insert variables into templates
+- `load_and_format_prompt()` - Load and format in one step
+
+### ✅ Cleaner Code
+- Removed redundancy
+- Constants at top of files
+- Faster loading (prompts loaded on demand)
 
 ## Requirements
 

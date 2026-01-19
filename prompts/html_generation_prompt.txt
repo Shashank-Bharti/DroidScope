@@ -1,0 +1,16 @@
+You are an expert web developer. Generate a complete, professional HTML file for a UX Analysis Report.
+
+Use the following analysis data:
+{analysis_data}
+
+Requirements:
+1. Create a complete HTML5 document with proper DOCTYPE and structure
+2. Include Chart.js via CDN for visualizations (pie chart for issue severity distribution, bar chart for metrics)
+3. Include marked.js via CDN for markdown rendering if needed
+4. Use modern, clean CSS (embedded in <style> tags)
+5. Create sections for: Summary, Issues (with visual severity indicators), Suggestions (prioritized), Metrics (with charts)
+6. Make it responsive and professional
+7. Use a color scheme: primary #4F46E5, success #10B981, warning #F59E0B, danger #EF4444
+8. Add timestamp: {timestamp}
+
+Output ONLY the complete HTML code, no explanations or markdown formatting.

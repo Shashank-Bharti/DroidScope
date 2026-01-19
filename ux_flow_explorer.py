@@ -9,12 +9,15 @@ import json
 from dotenv import load_dotenv
 import os
 from ux_analyzer import UXAnalyzer
+from utils import load_and_format_prompt
 
 load_dotenv()
 
-# Set your OpenRouter API key
-
-openrouter_key = os.getenv("API_KEY")
+# Configuration
+APP_NAME = "Instagram"
+OPENROUTER_KEY = os.getenv("API_KEY")
+MAX_STEPS = 110
+OUTPUT_FILE = "agent_result.txt"
 
 # Pydantic Model 
 class Screen(BaseModel):
@@ -39,57 +42,22 @@ class UXFlow(BaseModel):
 
 # Create OpenRouter LLM with Mistral model
 llm = OpenAILike(
-    model="mistralai/devstral-2512:free",  # or other Mistral models
+    model="mistralai/devstral-2512:free",
     api_base="https://openrouter.ai/api/v1",
-    api_key=openrouter_key,
+    api_key=OPENROUTER_KEY,
     temperature=0.2
 )
 
 config = DroidrunConfig()
-config.agent.max_steps = 110
+config.agent.max_steps = MAX_STEPS
+
+# Load agent goal from prompts folder
+agent_goal = load_and_format_prompt('agent_goal', app_name=APP_NAME)
 
 agent = DroidAgent(
-    goal=('''Explore the Instagram application by performing visible UI interactions only.
-Open primary tabs, menus, profiles, and settings that are explicitly present on the screen.
-Interact using taps, scrolls, and long-presses only when a visible UI affordance exists.
-
-Do not infer user intent, behavior, engagement, or opinions.
-Do not describe how users feel or why a screen exists.
-Do not assume functionality beyond what is directly observable.
-
-Avoid destructive or irreversible actions such as logout, account deletion, blocking, posting, liking, commenting, or sending messages.
-
-Navigate the interface to discover distinct UI states reachable through explicit taps, long-presses, or menu selections.
-Prefer breadth-first exploration before deeper navigation, but stop if no new UI states appear.
-
-Do not attempt to complete tasks, workflows, or goals.
-Do not follow content endlessly (e.g., infinite scrolling beyond context discovery).
-
-For each distinct UI state:
-- Record it as a screen only when the visible layout or controls change.
-- Assign a unique identifier.
-- Name the screen using visible labels or UI elements only (tabs, headers, menu titles).
-- Assign navigation depth relative to the starting screen.
-
-For each navigation event:
-- Record the source screen identifier.
-- Record the destination screen identifier.
-- Record the exact user action performed (e.g., "Tapped Reels tab", "Opened profile menu").
-
-Continue exploration until a reasonable structural coverage is reached or no new screens are discovered.
-
-Generate a markdown report containing:
-- A summary with total screens discovered, maximum depth, and exploration time.
-- A table of screens with identifiers, names, and depths.
-- A table of transitions with source, destination, and action.
-
-Export the generated report to a `.md` file.
-Output markdown only.'''
-),
+    goal=agent_goal,
     config=config,
-    llms=llm,  # Single LLM for all agents
-    
-    
+    llms=llm,
 )
 
 async def main():
@@ -131,11 +99,11 @@ async def main():
         
         # Write to text file
         output_text = "\n".join(output_lines)
-        with open("agent_result.txt", "w", encoding="utf-8") as txt_file:
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as txt_file:
             txt_file.write(output_text)
         
         print(f"Success: {success_status}")
-        print(f"Results saved to: agent_result.txt")
+        print(f"Results saved to: {OUTPUT_FILE}")
         
         # Run UX Analysis if exploration was successful
         if success_status:
@@ -143,9 +111,9 @@ async def main():
             print("Starting UX Analysis...")
             print("="*60)
             try:
-                analyzer = UXAnalyzer(api_key=openrouter_key)
+                analyzer = UXAnalyzer(api_key=OPENROUTER_KEY)
                 analyzer.run_analysis(
-                    report_path="agent_result.txt",
+                    report_path=OUTPUT_FILE,
                     output_path="ux_analysis_report.html"
                 )
             except Exception as analysis_error:
@@ -154,10 +122,10 @@ async def main():
         
     except Exception as e:
         error_msg = f"Error processing results: {str(e)}\nTimestamp: {timestamp}"
-        with open("agent_result.txt", "w", encoding="utf-8") as txt_file:
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as txt_file:
             txt_file.write(error_msg)
         print(f"Error occurred: {str(e)}")
-        print("Error details saved to: agent_result.txt")
+        print(f"Error details saved to: {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     asyncio.run(main())
