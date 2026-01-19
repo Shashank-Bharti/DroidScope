@@ -4,7 +4,7 @@
 ### Autonomous UI/UX Exploration & Analysis
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.8+-blue.svg?style=flat-square&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/Python-3.10+-blue.svg?style=flat-square&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/Flask-2.x-green.svg?style=flat-square&logo=flask" alt="Flask">
   <img src="https://img.shields.io/badge/DroidRun-SDK-orange.svg?style=flat-square" alt="DroidRun">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License">
@@ -198,17 +198,6 @@ This will:
 2. Generate `agent_result.txt` with exploration results
 3. Automatically run UX analysis
 4. Generate `ux_analysis_report.html` with visualizations
-
-</details>
-
-<details>
-<summary><b>Run Analysis Only (Standalone)</b></summary>
-
-```powershell
-python ux_analyzer.py
-```
-
-Analyzes existing `agent_result.txt` and generates HTML report.
 
 </details>
 
