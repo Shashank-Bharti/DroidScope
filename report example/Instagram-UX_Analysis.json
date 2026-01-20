@@ -1,0 +1,141 @@
+{
+  "app_metadata": {
+    "core_flows": [
+      "Home Feed",
+      "Profile",
+      "Direct Messages"
+    ],
+    "screens_discovered": 25,
+    "total_interactions": 150
+  },
+  "complexity_score": 7,
+  "consistency": {
+    "action_placement_variance": "low",
+    "inconsistent_labels": 4,
+    "pattern_violations": 2,
+    "reused_patterns": [
+      "Bottom Navigation Bar",
+      "Like Button",
+      "Story Ring"
+    ]
+  },
+  "error_handling": {
+    "error_explanation_quality": 6,
+    "handling_rating": "good",
+    "preventable_errors": 5,
+    "recovery_paths_available": true
+  },
+  "exploration_coverage": {
+    "clickable_elements_found": 150,
+    "dead_elements_pct": 5,
+    "navigation_loops_detected": false,
+    "screens_discovered": 25,
+    "successful_actions_pct": 95
+  },
+  "interaction_feedback": {
+    "error_message_clarity": 7,
+    "feedback_quality": "good",
+    "loading_state_presence_pct": 85,
+    "silent_failures": 3,
+    "visible_feedback_rate_pct": 90
+  },
+  "issues": [
+    {
+      "category": "Navigation",
+      "description": "Deep navigation path (depth 10) increases cognitive load.",
+      "effort": "Medium",
+      "impact": "User confusion and potential task abandonment.",
+      "location": "Profile Screen > Settings",
+      "severity": "High"
+    },
+    {
+      "category": "Error Handling",
+      "description": "Error messages lack clarity for failed login attempts.",
+      "effort": "Low",
+      "impact": "User frustration and repeated attempts.",
+      "location": "Login Screen",
+      "severity": "Medium"
+    },
+    {
+      "category": "Visual Hierarchy",
+      "description": "Inconsistent icon sizes and labels reduce clarity.",
+      "effort": "Low",
+      "impact": "Minor confusion in content discovery.",
+      "location": "Explore Screen",
+      "severity": "Low"
+    }
+  ],
+  "navigation_metrics": {
+    "architecture_quality": "clear",
+    "avg_depth": 5,
+    "backtracking_frequency": "medium",
+    "hub_screen_count": 3,
+    "label_action_match_score": 8,
+    "max_depth": 10,
+    "orphan_screens": 2
+  },
+  "positive": [
+    {
+      "aspect": "Bottom Navigation Bar",
+      "description": "Consistent placement and clear icons enhance navigation efficiency.",
+      "location": "Home Screen"
+    },
+    {
+      "aspect": "Like Button Feedback",
+      "description": "Immediate visual feedback with heart animation confirms user action.",
+      "location": "Post Interaction"
+    }
+  ],
+  "recommendations": [
+    {
+      "effort": "Medium",
+      "expected_impact": {
+        "error_reduction_pct": 5,
+        "task_success_increase_pct": 15,
+        "time_reduction_pct": 10
+      },
+      "priority": "High",
+      "rationale": "Addresses deep navigation paths by simplifying user flow.",
+      "recommendation": "Flatten navigation depth in Settings to reduce cognitive load."
+    },
+    {
+      "effort": "Low",
+      "expected_impact": {
+        "error_reduction_pct": 10,
+        "task_success_increase_pct": 10,
+        "time_reduction_pct": 5
+      },
+      "priority": "Medium",
+      "rationale": "Reduces user frustration by providing actionable feedback.",
+      "recommendation": "Improve error message clarity on Login Screen."
+    },
+    {
+      "effort": "Low",
+      "expected_impact": {
+        "error_reduction_pct": 2,
+        "task_success_increase_pct": 5,
+        "time_reduction_pct": 2
+      },
+      "priority": "Low",
+      "rationale": "Enhances visual clarity and content discovery.",
+      "recommendation": "Standardize icon sizes and labels on Explore Screen."
+    }
+  ],
+  "summary": "Instagram's UX maturity is strong with robust navigation and interaction feedback, but there are areas for improvement in error handling and visual hierarchy. Primary risks include deep navigation paths and inconsistent error messages, with significant potential for enhancing user confidence and task success.",
+  "ux_confidence_score": {
+    "factors": {
+      "exploration_coverage": 9,
+      "feedback_reliability": 8,
+      "interaction_consistency": 8,
+      "recovery_robustness": 7
+    },
+    "score": 8
+  },
+  "visual_hierarchy": {
+    "clarity_rating": "inconsistent",
+    "cta_visibility": 8,
+    "hierarchy_issues": 5,
+    "icon_label_clarity": 7,
+    "tap_target_compliance_pct": 90
+  }
+}
