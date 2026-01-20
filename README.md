@@ -1,7 +1,6 @@
 <div align="center">
+<img src='./images/Header.png' alt='DroidScope Autonomous UX Exploration & Analysis Tool Based on Droidrun Framework'>
 
-# 🔭 DroidScope
-### Autonomous UI/UX Exploration & Analysis
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-blue.svg?style=flat-square&logo=python" alt="Python">
@@ -11,16 +10,22 @@
 </p>
 
 <p align="center">
-An autonomous UI/UX exploration and analysis tool with a sharp, dark-mode web interface.<br>
-Uses DroidRun SDK automation to act as an intelligent UX tester, exploring apps and<br>
-generating comprehensive analysis reports with real-time execution logs.
+An autonomous UX exploration and analysis tool with a sleek monochrome web interface.<br>
+Uses <a href="https://github.com/droidrun/droidrun">DroidRun SDK</a> automation to act as an intelligent UX tester, exploring apps and<br>
+generating comprehensive analysis reports with real-time execution logs and professional metrics.
 </p>
 
 </div>
 
 ---
 
-## 🌟 Overview
+
+</tr>
+</table>
+
+---
+
+## 🔍 Overview
 
 <table>
 <tr>
@@ -46,19 +51,23 @@ generating comprehensive analysis reports with real-time execution logs.
 <td width="50%" valign="top">
 
 ### 🎨 Interface & UX
-- 🔭 **DroidScope UI** - Sharp dark design with 2px borders
-- 📋 **Live Execution Logs** - Real-time terminal events
-- 📊 **Dual SSE Streams** - Separate progress & log updates
-- 📈 **Visual Reports** - Interactive Chart.js visualizations
+- **Monochrome Design** - Clean black & white theme with grid background
+- **Live Execution Logs** - Real-time terminal events with agent reasoning
+- **Dual SSE Streams** - Separate progress & log updates
+- **Visual Reports** - Interactive Chart.js visualizations with 8 stat cards
+- **Card-Based Layout** - Professional result cards with metadata
+- **Rounded Corners** - Modern UI with consistent border-radius
 
 </td>
 <td width="50%" valign="top">
 
-### 🤖 Intelligence & Safety
-- 🎯 **Category-Aware** - Context-specific testing goals
-- ✅ **Balanced Analysis** - Strengths + improvements
-- 🔒 **Safety First** - Avoids destructive actions
-- ✓ **Device Verification** - Pre-flight `droidrun ping`
+### 🤖 Intelligence & Analysis
+- **Category-Aware** - Context-specific testing goals
+- **Comprehensive Metrics** - 12 UX categories analyzed
+- **Professional Reports** - Interaction feedback, visual hierarchy, consistency tracking
+- **Safety First** - Avoids destructive actions
+- **Device Verification** - Pre-flight droidrun ping
+- **Schema-Agnostic** - Backward & forward compatible JSON handling
 
 </td>
 </tr>
@@ -68,7 +77,8 @@ generating comprehensive analysis reports with real-time execution logs.
 ### ⚙️ Configuration
 - **Depth Control** - Adjustable (3-12 levels)
 - **Category Selection** - 13 app categories
-- **LLM Powered** - OpenRouter API integration
+- **Dynamic LLM Config** - Model & provider from environment variables
+- **Flexible API** - Supports any OpenAI-compatible endpoint
 
 </td>
 <td width="50%" valign="top">
@@ -136,11 +146,18 @@ pip install -r requirements.txt
 <details open>
 <summary><b>4️⃣ Configure Environment Variables</b></summary>
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` and configure:
 
 ```env
+# OpenRouter API Key (required)
 API_KEY=your_openrouter_api_key_here
+
+# LLM Model (optional, defaults shown)
+LLM_MODEL=mistralai/devstral-2512:free
+LLM_API_BASE=https://openrouter.ai/api/v1
 ```
+
+**Get your API key:** https://openrouter.ai/keys
 
 </details>
 
@@ -183,33 +200,52 @@ Then open **http://localhost:5000** in your browser.
 </tr>
 </table>
 
-### 🖥️ CLI Mode (Original)
-
-<details>
-<summary><b>Run UX Flow Explorer</b></summary>
-
-```powershell
-python ux_flow_explorer.py
-```
-
-This will:
-1. Explore the target application (configured in the script)
-2. Generate `agent_result.txt` with exploration results
-3. Automatically run UX analysis
-4. Generate `ux_analysis_report.html` with visualizations
-
-</details>
-
 ---
 
-## 📂 Output Files
+## 📊 Analysis Output
+
+### Generated Files
 
 | File | Description |
 |------|-------------|
-| `agent_result.txt` | Raw exploration results with success status |
-| `exploration_output.json` | Structured navigation graph |
-| `ux_analysis_blocks.json` | Analysis data for web interface |
-| `ux_analysis_report.html` | Standalone HTML report (CLI mode) |
+| `agent_result.txt` | Raw exploration results with markdown report |
+| `ux_analysis_blocks.json` | Comprehensive UX analysis with 12 metric categories |
+| `trajectories/[session]/` | Session data including screenshots and actions |
+
+### Metrics Analyzed
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Navigation & Structure**
+- Total screens discovered
+- Max depth reached
+- Orphan screens
+- Hub screen count
+- Dead elements percentage
+
+</td>
+<td width="50%" valign="top">
+
+**Interaction & Feedback**
+- Visible feedback rate
+- Silent failures count
+- CTA visibility score (1-10)
+- Preventable errors
+- Loading state presence
+
+</td>
+</tr>
+</table>
+
+### Report Sections
+
+- **Executive Summary** - Overall UX maturity assessment
+- **Key Metrics** - 3 charts + 8 stat cards with quantified data
+- **Strengths** - Positive UX patterns with evidence
+- **Issues** - Categorized problems with severity, location, and impact
+- **Recommendations** - Prioritized improvements with effort estimates
 
 ---
 
@@ -328,6 +364,7 @@ You should see:
 10%  - Generating category context
 20%  - Initializing DroidRun agent  
 30%  - Starting exploration (may take 5-15 min)
+30%  - Starting exploration (may take 5-15 min)
 60%  - Exploration complete
 75%  - Loading report
 80%  - Running UX analysis
@@ -402,16 +439,24 @@ DROIDRUN/
 
 <table>
 <tr>
-<td width="33%"><b>Sharp Design</b></td>
-<td width="67%">2px borders, zero border-radius for modern look</td>
+<td width="33%"><b>Monochrome Theme</b></td>
+<td width="67%">Clean black & white design with subtle grid pattern background</td>
 </tr>
 <tr>
-<td><b>Hover Effects</b></td>
-<td>Border colors change to accent blue on hover</td>
+<td><b>Rounded Design</b></td>
+<td>Consistent border-radius (8px-12px) across all UI elements</td>
+</tr>
+<tr>
+<td><b>Card-Based Layout</b></td>
+<td>Professional result cards with headers, badges, descriptions, and metadata</td>
 </tr>
 <tr>
 <td><b>Dual SSE Streams</b></td>
 <td>Separate endpoints for progress (<code>/api/progress</code>) and logs (<code>/api/logs</code>)</td>
+</tr>
+<tr>
+<td><b>Agent Reasoning</b></td>
+<td>Real-time stdout/stderr capture shows actual LLM chain-of-thought</td>
 </tr>
 </table>
 
@@ -481,27 +526,33 @@ On startup, `verify_setup.py` runs `droidrun ping` to ensure:
 
 ### 🔄 Change LLM Model
 
-Edit `exploration_runner.py` or `ux_analyzer.py`:
+Edit `.env` file:
 
-```python
-llm = OpenAILike(
-    model="mistralai/devstral-2512:free",  # Change this
-    api_base="https://openrouter.ai/api/v1",
-    api_key=api_key,
-    temperature=0.2
-)
+```env
+# Use a different model
+LLM_MODEL=anthropic/claude-3.5-sonnet
+
+# Or use OpenAI
+LLM_MODEL=openai/gpt-4
+LLM_API_BASE=https://api.openai.com/v1
 ```
+
+**Supported providers:**
+- OpenRouter (default) - Multiple models via single API
+- OpenAI - Direct GPT models
+- Any OpenAI-compatible endpoint
 
 ### 📝 Customize Prompts
 
 Edit files in `prompts/` folder:
 
-| File | Purpose |
-|------|---------|
-| `agent_goal.txt` | Exploration instructions |
-| `analysis_prompt.txt` | UX analysis criteria |
+| File | Purpose | Variables |
+|------|---------|----------|
+| `agent_goal.txt` | Exploration instructions with 12 data collection categories | `{app_name}`, `{category}` |
+| `analysis_prompt_v2.txt` | Professional UX analysis criteria with comprehensive metrics | `{report_content}` |
+| `html_generation_prompt.txt` | HTML report generation template | `{report_content}` |
 
-**Variables supported:** `{app_name}`, `{category}`, `{report_content}`
+**Note:** JSON examples in prompts must use escaped braces: `{{"key": "value"}}`
 
 ### 📏 Adjust Exploration Depth
 
@@ -523,11 +574,11 @@ config.agent.max_steps = max_depth * 15  # Steps = depth × 15
 </tr>
 <tr>
 <td>📱</td>
-<td>DroidRun framework</td>
+<td><a href="https://github.com/droidrun/droidrun">DroidRun framework</a></td>
 </tr>
 <tr>
 <td>🔑</td>
-<td>OpenRouter API key (for free LLM access)</td>
+<td><a href="https://openrouter.ai">OpenRouter</a> API key (for free LLM access)</td>
 </tr>
 <tr>
 <td>📲</td>
@@ -556,6 +607,12 @@ deactivate
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to submit issues or pull requests.
+
+### Contributors
+
+- **Shashank Bharti** - Core Development
+- **Sudhanshu Kumar** - Core Development
+- **Sumit Kumar** - Motivational Support🤌🏼
 
 ---
 

@@ -1,5 +1,5 @@
 """
-Exploration runner with category context and progress tracking
+Exploration runner with category-aware agent and progress tracking
 """
 import asyncio
 import json
@@ -15,44 +15,8 @@ from ux_analyzer import UXAnalyzer
 load_dotenv()
 
 
-def generate_category_context(app_name, category):
-    """Generate category-specific context for UX testing"""
-    api_key = os.getenv("API_KEY")
-    
-    llm = OpenAILike(
-        model="mistralai/devstral-2512:free",
-        api_base="https://openrouter.ai/api/v1",
-        api_key=api_key,
-        temperature=0.3
-    )
-    
-    category_prompt = f"""You are a UX testing specialist for {category} applications.
-
-For the app "{app_name}" in the {category} category, provide specific UX testing focus areas.
-
-Consider:
-- Common user flows in {category} apps
-- Critical features users expect in {category}
-- Industry-specific UI patterns for {category}
-- What makes excellent UX in {category} applications
-
-Return 3-4 concise sentences with:
-1. Key navigation flows to explore
-2. Critical features to find
-3. UX patterns to validate
-
-Focus on structural navigation, not user psychology. Be specific to {category} apps."""
-
-    try:
-        response = llm.complete(category_prompt)
-        return response.text.strip()
-    except Exception as e:
-        print(f"Error generating category context: {e}")
-        return f"Standard UX testing for {category} application focusing on navigation structure and feature discoverability."
-
-
-async def run_exploration_with_category(app_name, category, max_depth, progress_callback, log_callback=None):
-    """Run exploration with category context"""
+async def run_exploration_with_category(app_name, category, max_depth, progress_callback, log_callback=None, stop_flag=None):
+    """Run exploration with category context and stop capability"""
     
     def log(message, log_type='info'):
         """Helper to send log if callback provided"""
@@ -60,53 +24,57 @@ async def run_exploration_with_category(app_name, category, max_depth, progress_
             log_callback(message, log_type)
         print(f"[{log_type.upper()}] {message}")
     
+    def check_stop():
+        """Check if stop was requested"""
+        if stop_flag and stop_flag.is_set():
+            log("Agent execution stopped by user", 'warning')
+            raise KeyboardInterrupt("Agent stopped by user request")
+    
     try:
+        check_stop()
         log(f"Initializing exploration for {app_name}", 'info')
-        progress_callback("Generating category-specific testing context...", 10)
-        
-        # Generate category context
-        log(f"Generating {category} category context...", 'info')
-        category_context = generate_category_context(app_name, category)
-        log(f"Category context generated: {len(category_context)} chars", 'success')
-        
         progress_callback("Loading exploration parameters...", 15)
+        
         log("Loading agent goal template", 'info')
-        
-        # Load and format agent goal
         agent_goal_template = load_prompt('agent_goal')
-        agent_goal = format_prompt(agent_goal_template, app_name=app_name)
+        agent_goal = format_prompt(agent_goal_template, app_name=app_name, category=category)
         
-        # Enhance goal with category context and depth
+        # Add depth constraints
         enhanced_goal = f"""{agent_goal}
 
-CATEGORY-SPECIFIC CONTEXT ({category}):
-{category_context}
-
-EXPLORATION CONSTRAINTS:
+## EXPLORATION CONSTRAINTS:
 - Maximum navigation depth: {max_depth} levels
-- Focus on {category}-specific features and flows
+- Focus on features and flows typical of {category} apps
 - Document both positive UX patterns and issues
-
-Remember to identify what works well in addition to problems."""
+- Be specific with screen names, tap counts, and locations"""
         
-        log(f"Agent goal enhanced with category context and depth={max_depth}", 'success')
+        log(f"Agent goal configured for {category} app with depth={max_depth}", 'success')
         progress_callback(f"Initializing DroidRun agent for {app_name}...", 20)
+        
+        check_stop()
         
         # Setup LLM and config
         log("Setting up LLM configuration", 'info')
         api_key = os.getenv("API_KEY")
+        model = os.getenv("LLM_MODEL", "mistralai/devstral-2512:free")
+        api_base = os.getenv("LLM_API_BASE", "https://openrouter.ai/api/v1")
         llm = OpenAILike(
-            model="mistralai/devstral-2512:free",
-            api_base="https://openrouter.ai/api/v1",
+            model=model,
+            api_base=api_base,
             api_key=api_key,
             temperature=0.2
         )
-        log("LLM initialized: mistralai/devstral-2512:free", 'success')
+        log(f"LLM initialized: {model}", 'success')
+        
+        check_stop()
         
         log("Creating DroidRun configuration", 'info')
         config = DroidrunConfig()
         config.agent.max_steps = max_depth * 15
+        
         log(f"Max steps set to {config.agent.max_steps}", 'info')
+        
+        check_stop()
         
         progress_callback("Creating exploration agent...", 25)
         log("Creating DroidAgent instance", 'info')
@@ -119,13 +87,107 @@ Remember to identify what works well in addition to problems."""
         )
         log("DroidAgent created successfully", 'success')
         
-        progress_callback(f"Starting UX exploration of {app_name}...", 30)
-        log(f"Beginning autonomous exploration (max depth: {max_depth})", 'info')
+        check_stop()
         
-        # Run exploration
-        log("Agent.run() started - this may take several minutes", 'info')
-        result = await agent.run()
-        log("Agent.run() completed", 'success')
+        progress_callback(f"Started UX exploration of {app_name}...", 30)
+        log(f"Beginning autonomous exploration (max depth: {max_depth})", 'info')
+        log("=" * 60, 'info')
+        log("🤖 AGENT EXECUTION - Live Reasoning & Actions", 'info')
+        log("=" * 60, 'info')
+        
+        # Capture agent stdout/stderr but only send on flush or buffer full
+        import sys
+        from io import StringIO
+        
+        class BufferedTeeOutput:
+            """Buffers output and sends in larger chunks to prevent fragmentation"""
+            def __init__(self, original, log_callback, log_type='agent', buffer_size=2048):
+                self.original = original
+                self.log_callback = log_callback
+                self.log_type = log_type
+                self.buffer = StringIO()
+                self.output_buffer = []
+                self.buffer_size = buffer_size
+                self.total_chars = 0
+            
+            def write(self, data):
+                if not data:
+                    return
+                
+                # Always write to original
+                self.original.write(data)
+                # Store in buffer
+                self.buffer.write(data)
+                self.output_buffer.append(data)
+                self.total_chars += len(data)
+                
+                # Only send to frontend when buffer is large enough or we hit newlines with enough content
+                if self.log_callback and self.total_chars >= self.buffer_size:
+                    self._flush_buffer()
+            
+            def _flush_buffer(self):
+                """Internal flush of accumulated output"""
+                if not self.output_buffer:
+                    return
+                    
+                # Combine all buffered output
+                combined = ''.join(self.output_buffer)
+                
+                # Split into lines and send non-empty ones
+                lines = combined.split('\n')
+                non_empty_lines = [line for line in lines if line.strip()]
+                
+                if non_empty_lines and self.log_callback:
+                    # Send as batched message
+                    self.log_callback('\n'.join(non_empty_lines), self.log_type)
+                
+                # Clear the output buffer
+                self.output_buffer = []
+                self.total_chars = 0
+            
+            def flush(self):
+                """Explicit flush - send everything immediately"""
+                self.original.flush()
+                self._flush_buffer()
+            
+            def getvalue(self):
+                return self.buffer.getvalue()
+        
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
+        
+        # Buffer stdout with 2KB chunks, stderr immediately
+        tee_stdout = BufferedTeeOutput(original_stdout, log_callback, 'agent', buffer_size=2048)
+        tee_stderr = BufferedTeeOutput(original_stderr, log_callback, 'warning', buffer_size=512)
+        
+        sys.stdout = tee_stdout
+        sys.stderr = tee_stderr
+        
+        try:
+            # Run exploration - logs will stream in larger batches
+            log("⏳ Agent analyzing app structure...", 'info')
+            result = await agent.run()
+            
+            # Flush any remaining output
+            sys.stdout.flush()
+            sys.stderr.flush()
+            
+            # Restore stdout/stderr
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+            
+            log("=" * 60, 'success')
+            log("✅ AGENT EXECUTION COMPLETE", 'success')
+            log("=" * 60, 'success')
+            log("Agent.run() completed", 'success')
+            
+        except Exception as agent_error:
+            # Restore stdout/stderr on error
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+            
+            log(f"Agent error: {str(agent_error)}", 'error')
+            raise agent_error
         
         progress_callback("Exploration complete. Processing results...", 60)
         log("Processing exploration results", 'info')

@@ -12,11 +12,13 @@ class UXAnalyzer:
     def __init__(self, api_key=None):
         """Initialize the UX Analyzer with OpenRouter LLM"""
         self.api_key = api_key or os.getenv("API_KEY")
+        model = os.getenv("LLM_MODEL", "mistralai/devstral-2512:free")
+        api_base = os.getenv("LLM_API_BASE", "https://openrouter.ai/api/v1")
         
         # Use a free model from OpenRouter for analysis
         self.llm = OpenAILike(
-            model="mistralai/devstral-2512:free",
-            api_base="https://openrouter.ai/api/v1",
+            model=model,
+            api_base=api_base,
             api_key=self.api_key,
             temperature=0.3
         )
@@ -201,75 +203,13 @@ class UXAnalyzer:
         return True
     
     def analyze_ux_with_positive(self, report_content, category):
-        """Analyze UX with focus on both positive and negative findings"""
-        enhanced_prompt = f"""You are a senior UI/UX architect analyzing a {category} application.
-
-Analyze this UI exploration report focusing on BOTH strengths and weaknesses.
-
-Report:
----
-{report_content}
----
-
-Provide a balanced analysis including:
-
-1. POSITIVE FINDINGS - What works well:
-   - Effective navigation patterns
-   - Good feature placement
-   - Intuitive user flows
-   - Successful {category}-specific UX
-
-2. ISSUES - What needs improvement:
-   - Navigation friction
-   - Discoverability problems
-   - Complexity issues
-   - {category}-specific gaps
-
-3. METRICS - Quantifiable data
-
-Return STRICTLY this JSON format:
-
-{{
-  "summary": "Balanced overview mentioning both strengths and areas for improvement",
-  
-  "positive": [
-    {{
-      "aspect": "What works well",
-      "description": "Why it's good UX"
-    }}
-  ],
-  
-  "issues": [
-    {{
-      "category": "Issue type",
-      "severity": "High|Medium|Low",
-      "description": "What's wrong"
-    }}
-  ],
-  
-  "suggestions": [
-    {{
-      "priority": "High|Medium|Low",
-      "recommendation": "Specific improvement",
-      "impact": "Expected benefit"
-    }}
-  ],
-  
-  "metrics": {{
-    "total_screens": <number>,
-    "max_depth": <number>,
-    "avg_depth": <number>,
-    "hub_screen_count": <number>,
-    "shallow_engagement_ratio": <number 0-1>,
-    "complexity_score": <number 1-10>
-  }}
-}}
-
-Output JSON only. No markdown. Be specific to {category} apps."""
+        """Analyze UX with comprehensive metrics extraction"""
+        # Load the enhanced analysis prompt
+        analysis_prompt = load_and_format_prompt('analysis_prompt_v2', report_content=report_content)
 
         try:
-            print("🔄 Analyzing UX (including positive findings)...")
-            response = self.llm.complete(enhanced_prompt)
+            print("🔄 Analyzing UX with comprehensive metrics...")
+            response = self.llm.complete(analysis_prompt)
             analysis_text = response.text.strip()
             
             # Remove markdown code blocks if present
@@ -280,11 +220,93 @@ Output JSON only. No markdown. Be specific to {category} apps."""
             
             analysis_json = json.loads(analysis_text)
             
-            # Ensure positive field exists
+            # Ensure all required fields exist with comprehensive defaults to prevent undefined errors
+            if 'summary' not in analysis_json:
+                analysis_json['summary'] = 'UX analysis completed.'
             if 'positive' not in analysis_json:
                 analysis_json['positive'] = []
+            if 'issues' not in analysis_json:
+                analysis_json['issues'] = []
+            if 'recommendations' not in analysis_json:
+                analysis_json['recommendations'] = []
             
-            print("✓ UX analysis completed")
+            # App metadata with all nested properties
+            if 'app_metadata' not in analysis_json:
+                analysis_json['app_metadata'] = {}
+            analysis_json['app_metadata'].setdefault('screens_discovered', 0)
+            analysis_json['app_metadata'].setdefault('total_interactions', 0)
+            analysis_json['app_metadata'].setdefault('core_flows', [])
+            
+            # Exploration coverage with all nested properties
+            if 'exploration_coverage' not in analysis_json:
+                analysis_json['exploration_coverage'] = {}
+            analysis_json['exploration_coverage'].setdefault('screens_discovered', 0)
+            analysis_json['exploration_coverage'].setdefault('clickable_elements_found', 0)
+            analysis_json['exploration_coverage'].setdefault('successful_actions_pct', 0)
+            analysis_json['exploration_coverage'].setdefault('dead_elements_pct', 0)
+            analysis_json['exploration_coverage'].setdefault('navigation_loops_detected', False)
+            
+            # Navigation metrics with all nested properties
+            if 'navigation_metrics' not in analysis_json:
+                analysis_json['navigation_metrics'] = {}
+            analysis_json['navigation_metrics'].setdefault('avg_depth', 0)
+            analysis_json['navigation_metrics'].setdefault('max_depth', 0)
+            analysis_json['navigation_metrics'].setdefault('backtracking_frequency', 'low')
+            analysis_json['navigation_metrics'].setdefault('orphan_screens', 0)
+            analysis_json['navigation_metrics'].setdefault('label_action_match_score', 5)
+            analysis_json['navigation_metrics'].setdefault('hub_screen_count', 0)
+            analysis_json['navigation_metrics'].setdefault('architecture_quality', 'moderate')
+            
+            # Interaction feedback with all nested properties
+            if 'interaction_feedback' not in analysis_json:
+                analysis_json['interaction_feedback'] = {}
+            analysis_json['interaction_feedback'].setdefault('visible_feedback_rate_pct', 0)
+            analysis_json['interaction_feedback'].setdefault('loading_state_presence_pct', 0)
+            analysis_json['interaction_feedback'].setdefault('error_message_clarity', 5)
+            analysis_json['interaction_feedback'].setdefault('silent_failures', 0)
+            analysis_json['interaction_feedback'].setdefault('feedback_quality', 'moderate')
+            
+            # Visual hierarchy with all nested properties
+            if 'visual_hierarchy' not in analysis_json:
+                analysis_json['visual_hierarchy'] = {}
+            analysis_json['visual_hierarchy'].setdefault('cta_visibility', 5)
+            analysis_json['visual_hierarchy'].setdefault('tap_target_compliance_pct', 0)
+            analysis_json['visual_hierarchy'].setdefault('icon_label_clarity', 5)
+            analysis_json['visual_hierarchy'].setdefault('hierarchy_issues', 0)
+            analysis_json['visual_hierarchy'].setdefault('clarity_rating', 'moderate')
+            
+            # Consistency with all nested properties
+            if 'consistency' not in analysis_json:
+                analysis_json['consistency'] = {}
+            analysis_json['consistency'].setdefault('reused_patterns', [])
+            analysis_json['consistency'].setdefault('inconsistent_labels', 0)
+            analysis_json['consistency'].setdefault('action_placement_variance', 'low')
+            analysis_json['consistency'].setdefault('pattern_violations', 0)
+            
+            # Error handling with all nested properties
+            if 'error_handling' not in analysis_json:
+                analysis_json['error_handling'] = {}
+            analysis_json['error_handling'].setdefault('preventable_errors', 0)
+            analysis_json['error_handling'].setdefault('recovery_paths_available', False)
+            analysis_json['error_handling'].setdefault('error_explanation_quality', 5)
+            analysis_json['error_handling'].setdefault('handling_rating', 'moderate')
+            
+            # UX confidence score with all nested properties
+            if 'ux_confidence_score' not in analysis_json:
+                analysis_json['ux_confidence_score'] = {}
+            analysis_json['ux_confidence_score'].setdefault('score', 5)
+            if 'factors' not in analysis_json['ux_confidence_score']:
+                analysis_json['ux_confidence_score']['factors'] = {}
+            analysis_json['ux_confidence_score']['factors'].setdefault('exploration_coverage', 5)
+            analysis_json['ux_confidence_score']['factors'].setdefault('interaction_consistency', 5)
+            analysis_json['ux_confidence_score']['factors'].setdefault('feedback_reliability', 5)
+            analysis_json['ux_confidence_score']['factors'].setdefault('recovery_robustness', 5)
+            
+            # Complexity score
+            if 'complexity_score' not in analysis_json:
+                analysis_json['complexity_score'] = 5
+            
+            print("✓ UX analysis completed with comprehensive metrics")
             return analysis_json
         except json.JSONDecodeError as e:
             print(f"Error parsing JSON response: {str(e)}")

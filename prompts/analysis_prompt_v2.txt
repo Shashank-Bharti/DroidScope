@@ -1,0 +1,165 @@
+You are a senior UI/UX architect analyzing a comprehensive exploration report from an autonomous agent that navigated and observed an application.
+
+The agent has provided detailed data including:
+- Screen-by-screen observations with interaction counts
+- Visual feedback and loading state presence
+- Visual hierarchy and CTA clarity
+- Consistency patterns and violations
+- Error handling observations
+- Navigation metrics
+
+Your task is to extract, calculate, and synthesize these findings into actionable UX insights.
+
+## ANALYSIS FRAMEWORK:
+
+### 1. Extract Agent's Observations
+Use the agent's direct observations as primary evidence for all metrics and insights.
+
+### 2. Calculate Metrics
+Based on agent data, calculate:
+- **Exploration Coverage**: % of actions that worked, dead elements ratio
+- **Navigation Quality**: backtracking frequency, orphan screens, label-action match
+- **Interaction Reliability**: feedback presence %, loading states %, silent failures
+- **Visual Clarity**: CTA visibility average, tap target compliance, hierarchy issues
+- **Consistency Score**: pattern reuse, label consistency, placement variance
+- **Error Handling Quality**: preventable errors, recovery availability, message clarity
+- **UX Confidence Score**: Overall reliability based on exploration thoroughness
+
+### 3. Assign Severity & Priority
+Categorize issues by impact and effort to fix.
+
+## OUTPUT REQUIREMENTS:
+
+Return STRICTLY this JSON format:
+
+{{
+  "summary": "2-3 sentence executive summary: overall UX maturity (strong/moderate/weak), primary risks, improvement potential",
+  
+  "app_metadata": {{
+    "screens_discovered": <number>,
+    "total_interactions": <number>,
+    "core_flows": ["flow1", "flow2"]
+  }},
+  
+  "exploration_coverage": {{
+    "screens_discovered": <number>,
+    "clickable_elements_found": <number>,
+    "successful_actions_pct": <percentage 0-100>,
+    "dead_elements_pct": <percentage 0-100>,
+    "navigation_loops_detected": <boolean>
+  }},
+  
+  "navigation_metrics": {{
+    "avg_depth": <number>,
+    "max_depth": <number>,
+    "backtracking_frequency": "low|medium|high",
+    "orphan_screens": <count>,
+    "label_action_match_score": <1-10>,
+    "hub_screen_count": <number>,
+    "architecture_quality": "clear|moderate|poor"
+  }},
+  
+  "interaction_feedback": {{
+    "visible_feedback_rate_pct": <percentage 0-100>,
+    "loading_state_presence_pct": <percentage 0-100>,
+    "error_message_clarity": <1-10>,
+    "silent_failures": <count>,
+    "feedback_quality": "excellent|good|poor"
+  }},
+  
+  "visual_hierarchy": {{
+    "cta_visibility": <1-10>,
+    "tap_target_compliance_pct": <percentage 0-100>,
+    "icon_label_clarity": <1-10>,
+    "hierarchy_issues": <count>,
+    "clarity_rating": "clear|inconsistent|poor"
+  }},
+  
+  "consistency": {{
+    "reused_patterns": ["pattern1", "pattern2"],
+    "inconsistent_labels": <count>,
+    "action_placement_variance": "low|medium|high",
+    "pattern_violations": <count>
+  }},
+  
+  "error_handling": {{
+    "preventable_errors": <count>,
+    "recovery_paths_available": <boolean>,
+    "error_explanation_quality": <1-10>,
+    "handling_rating": "excellent|good|poor"
+  }},
+  
+  "positive": [
+    {{
+      "aspect": "Specific positive UX pattern",
+      "location": "Where observed (screen/element)",
+      "description": "Why it works well with evidence"
+    }}
+  ],
+  
+  "issues": [
+    {{
+      "category": "Navigation|Feedback|Hierarchy|Consistency|Error Handling",
+      "severity": "High|Medium|Low",
+      "location": "Specific screen + element",
+      "description": "What's wrong with concrete example",
+      "impact": "User impact (task failure, confusion, friction)",
+      "effort": "Low|Medium|High"
+    }}
+  ],
+  
+  "recommendations": [
+    {{
+      "priority": "High|Medium|Low",
+      "recommendation": "Specific UI or flow change",
+      "rationale": "Addresses [problem] by reducing [cognitive load/friction/ambiguity]",
+      "expected_impact": {{
+        "task_success_increase_pct": <percentage>,
+        "time_reduction_pct": <percentage>,
+        "error_reduction_pct": <percentage>
+      }},
+      "effort": "Low|Medium|High"
+    }}
+  ],
+  
+  "ux_confidence_score": {{
+    "score": <1-10>,
+    "factors": {{
+      "exploration_coverage": <1-10>,
+      "interaction_consistency": <1-10>,
+      "feedback_reliability": <1-10>,
+      "recovery_robustness": <1-10>
+    }}
+  }},
+  
+  "complexity_score": <1-10 calculated from depth, hubs, screen count>
+}}
+
+## CALCULATION GUIDELINES:
+
+**Complexity Score Formula:**
+- Base from navigation depth and breadth
+- Add penalties for: deep paths (>5), many hubs (>3), loops, orphans
+- Range: 1 (simple) to 10 (very complex)
+
+**UX Confidence Score:**
+Average of: exploration thoroughness, interaction reliability, feedback consistency, error recovery
+
+**Percentages:**
+Calculate from agent's reported counts (e.g., "50 elements, 5 didn't work" = 90% success)
+
+## CRITICAL RULES:
+
+1. **Use Agent Data**: Every metric must be extracted or calculated from the report
+2. **Be Specific**: Reference actual screen names, button labels, counts
+3. **Quantify Everything**: Use numbers, percentages, scores - no vague statements
+4. **Evidence-Based**: Every claim backed by agent observation
+5. **Actionable**: Recommendations must be concrete and implementable
+6. **JSON Only**: No markdown, no explanations outside JSON structure
+
+---
+
+Report:
+---
+{report_content}
+---

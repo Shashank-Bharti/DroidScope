@@ -71,7 +71,7 @@ def check_directories():
 
 def check_prompt_files():
     """Check if prompt files exist"""
-    prompts = ['agent_goal.txt', 'analysis_prompt.txt', 'html_generation_prompt.txt']
+    prompts = ['agent_goal.txt', 'analysis_prompt_v2.txt', 'html_generation_prompt.txt']
     all_exist = True
     
     for prompt in prompts:
@@ -88,7 +88,6 @@ def check_template_files():
     """Check if template files exist"""
     files = {
         'templates/index.html': 'Frontend template',
-        'static/style.css': 'CSS styles',
         'static/script.js': 'Frontend JavaScript'
     }
     all_exist = True

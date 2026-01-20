@@ -8,6 +8,8 @@ from llama_index.llms.openai_like import OpenAILike
 import queue
 import threading
 import sys
+import io
+from contextlib import redirect_stdout, redirect_stderr
 
 load_dotenv()
 
@@ -18,6 +20,33 @@ app.config['SECRET_KEY'] = 'droidrun-ux-tester-secret'
 progress_queue = queue.Queue()
 logs_queue = queue.Queue()
 
+# Global flag to signal agent stop
+agent_stop_flag = threading.Event()
+current_exploration_thread = None
+
+class LogCapture:
+    """Captures stdout/stderr and sends to SSE"""
+    def __init__(self, log_callback, log_type='info'):
+        self.log_callback = log_callback
+        self.log_type = log_type
+        self.buffer = []
+    
+    def write(self, message):
+        if message.strip():  # Only send non-empty messages
+            # Clean and format the message
+            clean_msg = message.strip()
+            self.log_callback(clean_msg, self.log_type)
+            # Also write to original stdout for server logs
+            if sys.__stdout__ is not None:
+                sys.__stdout__.write(message)
+        return len(message)
+    
+    def flush(self):
+        pass
+    
+    def isatty(self):
+        return False
+
 def send_log(message, log_type='info'):
     """Send log message to SSE queue"""
     logs_queue.put({
@@ -25,37 +54,6 @@ def send_log(message, log_type='info'):
         'type': log_type,
         'timestamp': datetime.now().strftime("%H:%M:%S")
     })
-
-# Category context generator
-def generate_category_context(app_name, category, api_key):
-    """Generate category-specific context for UX testing"""
-    llm = OpenAILike(
-        model="mistralai/devstral-2512:free",
-        api_base="https://openrouter.ai/api/v1",
-        api_key=api_key,
-        temperature=0.3
-    )
-    
-    category_prompt = f"""You are a UX testing specialist for {category} applications.
-
-For the app "{app_name}" in the {category} category, provide specific UX testing focus areas.
-
-Consider:
-- Common user flows in {category} apps
-- Critical features users expect
-- Industry-specific UI patterns
-- Key success metrics for {category}
-
-Return a concise paragraph (3-4 sentences) with testing priorities and what makes good UX in this category.
-Focus on structural navigation, not user psychology."""
-
-    try:
-        response = llm.complete(category_prompt)
-        return response.text.strip()
-    except Exception as e:
-        print(f"Error generating category context: {e}")
-        return f"Standard UX testing for {category} application."
-
 
 def send_progress(message, percentage=0):
     """Send progress update to SSE queue"""
@@ -75,6 +73,8 @@ def index():
 @app.route('/api/run-test', methods=['POST'])
 def run_test():
     """Start UX exploration test"""
+    global current_exploration_thread, agent_stop_flag
+    
     data = request.json
     app_name = data.get('app_name', 'Unknown App')
     category = data.get('category', 'General')
@@ -86,6 +86,9 @@ def run_test():
     while not logs_queue.empty():
         logs_queue.get()
     
+    # Clear stop flag
+    agent_stop_flag.clear()
+    
     # Start async test in background thread
     thread = threading.Thread(
         target=run_exploration_async,
@@ -93,6 +96,9 @@ def run_test():
     )
     thread.daemon = True
     thread.start()
+    
+    # Store reference to current thread
+    current_exploration_thread = thread
     
     return jsonify({
         'status': 'started',
@@ -169,48 +175,87 @@ def get_results():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/stop-agent', methods=['POST'])
+def stop_agent():
+    """Stop the currently running agent"""
+    global agent_stop_flag, current_exploration_thread
+    
+    try:
+        if current_exploration_thread and current_exploration_thread.is_alive():
+            # Set the stop flag
+            agent_stop_flag.set()
+            send_log("⚠️ Stop signal sent to agent", 'warning')
+            send_progress("Agent stopping...", -1)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Stop signal sent to agent'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No agent currently running'
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 def run_exploration_async(app_name, category, max_depth):
     """Run the exploration and analysis asynchronously"""
+    global agent_stop_flag
+    
     try:
         # Import here to avoid circular imports
         from exploration_runner import run_exploration_with_category
         
-        send_log(f"Starting test for {app_name}...", 'info')
+        send_log(f"🚀 Starting UX exploration for {app_name}...", 'info')
         send_progress(f"Initializing test for {app_name}...", 5)
         
-        # Run the exploration
+        # Run the exploration with stop flag
         asyncio.run(run_exploration_with_category(
             app_name=app_name,
             category=category,
             max_depth=max_depth,
             progress_callback=send_progress,
-            log_callback=send_log
+            log_callback=send_log,
+            stop_flag=agent_stop_flag
         ))
         
-        send_log("Test completed successfully!", 'success')
+        send_log("✅ Test completed successfully!", 'success')
         send_progress("Test completed successfully!", 100)
-        
+    
+    except KeyboardInterrupt:
+        send_log("⚠️ Agent execution stopped by user", 'warning')
+        send_progress("Agent stopped by user", -1)
     except Exception as e:
-        error_msg = f"Error: {str(e)}"
+        error_msg = f"❌ Error: {str(e)}"
         send_log(error_msg, 'error')
         send_progress(error_msg, -1)
         print(f"Exploration error: {e}")
 
 
 if __name__ == '__main__':
-    # Run verification before starting server
-    print("Running pre-flight checks...")
-    try:
-        from verify_setup import main as verify_main
-        verify_main()
-    except SystemExit as e:
-        if e.code != 0:
-            print("\n❌ Verification failed. Please fix the issues above.")
-            sys.exit(1)
-    
     # Ensure templates and static folders exist
     os.makedirs('templates', exist_ok=True)
     os.makedirs('static', exist_ok=True)
+    
+    # Run verification before starting server (only in main process, not reloader)
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        # This is the reloader process, skip verification
+        pass
+    else:
+        # This is the main process, run verification once
+        print("Running pre-flight checks...")
+        try:
+            from verify_setup import main as verify_main
+            verify_main()
+        except SystemExit as e:
+            if e.code != 0:
+                print("\n❌ Verification failed. Please fix the issues above.")
+                sys.exit(1)
     
     print("\n" + "="*60)
     print("🔭 Starting DroidScope UX Tester...")

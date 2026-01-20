@@ -1,144 +1,449 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> DroidScope - UX Tester</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DroidScope - UX Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>DroidScope</h1>
-            <p class="subtitle">Autonomous UI/UX Exploration & Analysis</p>
-        </header>
+    <style>
+      :root {
+        --accent: #ffffff;
+        --accent-hover: #e0e0e0;
+        --success: #d0d0d0;
+        --warning: #b0b0b0;
+        --danger: #909090;
+      }
 
-        <!-- Configuration Panel -->
-        <div class="config-panel" id="configPanel">
-            <h2>Test Configuration</h2>
-            
-            <div class="form-group">
-                <label for="appName">Application Name</label>
-                <input type="text" id="appName" placeholder="e.g., Instagram, WhatsApp" required>
-            </div>
+      body {
+        position: relative;
+        overflow-x: hidden;
+        background-color: #000000;
+      }
 
-            <div class="form-group">
-                <label for="category">Category</label>
-                <select id="category" required>
-                    <option value="">Select Category</option>
-                    <option value="Social Media">Social Media</option>
-                    <option value="E-Commerce">E-Commerce</option>
-                    <option value="Food Delivery">Food Delivery</option>
-                    <option value="Productivity">Productivity</option>
-                    <option value="Entertainment">Entertainment</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Health & Fitness">Health & Fitness</option>
-                    <option value="Education">Education</option>
-                    <option value="Travel">Travel</option>
-                    <option value="Gaming">Gaming</option>
-                    <option value="News">News</option>
-                    <option value="Messaging">Messaging</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
+      .grid-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #000000;
+        background-image:
+          linear-gradient(to right, #52525292 1px, transparent 1px),
+          linear-gradient(to bottom, #52525292 1px, transparent 1px);
+        background-size: 30px 36px;
+        -webkit-mask-image: radial-gradient(
+          ellipse 80% 50% at 50% 0%,
+          #898989 70%,
+          transparent 110%
+        );
+        mask-image: radial-gradient(
+          ellipse 80% 50% at 50% 0%,
+          #848484 70%,
+          transparent 110%
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
 
-            <div class="form-group">
-                <label for="maxDepth">Maximum Exploration Depth: <span id="depthValue">6</span></label>
-                <input type="range" id="maxDepth" min="3" max="12" value="6" step="1">
-                <div class="slider-labels">
-                    <span>3 (Quick)</span>
-                    <span>12 (Deep)</span>
-                </div>
-                <p class="depth-disclaimer">Note: Depth level determines navigation distance, not total steps executed</p>
-            </div>
+      .content-wrapper {
+        position: relative;
+        z-index: 1;
+      }
 
-            <button class="btn-primary" id="startTestBtn" onclick="startTest()">
-                <span class="btn-icon">▶</span> Start UX Test
-            </button>
+      .gradient-accent {
+        background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Range Slider Styling */
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 8px;
+        background: #404040;
+        outline: none;
+        border-radius: 4px;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        background: #ffffff;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s ease;
+      }
+
+      input[type="range"]::-webkit-slider-thumb:hover {
+        background: #e0e0e0;
+        width: 28px;
+        height: 28px;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
+
+      /* Firefox */
+      input[type="range"]::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        background: #ffffff;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s ease;
+      }
+
+      input[type="range"]::-moz-range-thumb:hover {
+        background: #e0e0e0;
+        width: 28px;
+        height: 28px;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
+      
+      /* Card Styling for Results */
+      .result-card {
+        background: #18181b;
+        border: 1px solid #3f3f46;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+      }
+      
+      .result-card:hover {
+        border-color: #71717a;
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+      }
+      
+      .result-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      
+      .result-card-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #ffffff;
+      }
+      
+      .result-badge {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      
+      .badge-good {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+      }
+      
+      .badge-high {
+        background: rgba(100, 100, 100, 0.3);
+        color: #d4d4d8;
+      }
+      
+      .badge-medium {
+        background: rgba(150, 150, 150, 0.3);
+        color: #e4e4e7;
+      }
+      
+      .badge-low {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+      }
+      
+      .result-card-description {
+        color: #a1a1aa;
+        line-height: 1.6;
+        margin-bottom: 8px;
+      }
+      
+      .result-card-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #27272a;
+      }
+      
+      .result-card-meta-item {
+        font-size: 0.875rem;
+        color: #71717a;
+      }
+      
+      .result-card-meta-item strong {
+        color: #a1a1aa;
+      }
+      
+      .metric-stat-card {
+        background: #18181b;
+        border: 1px solid #3f3f46;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+      }
+      
+      .metric-stat-card:hover{
+        border: 1px solid #efefef;
+      }
+
+      .metric-stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 4px;
+      }
+      
+      .metric-stat-label {
+        font-size: 0.875rem;
+        color: #71717a;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-gray-200 p-4">
+    <div class="grid-background"></div>
+    <div class="max-w-4xl h-screen mx-auto content-wrapper">
+      <!-- Header -->
+      <header
+        class="text-center mb-10 p-8 rounded-xl hover:border-white transition-colors"
+      >
+        <h1 class="text-[6.5rem] font-bold gradient-accent">DroidScope</h1>
+        <p class="text-gray-400 text-md">
+          Autonomous UX Exploration & Analysis Tool Based on Droidrun Framework
+        </p>
+      </header>
+
+      <!-- Configuration Panel -->
+      <div
+        class="bg-zinc-900 p-8 border-2 border-gray-700 rounded-xl hover:border-white transition-colors mb-8"
+        id="configPanel"
+      >
+        <h2 class="text-2xl font-bold text-white mb-6">Test Configuration</h2>
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <!-- configration input fields -->
+          <div class="mb-6 w-full ">
+            <label for="appName" class="block text-gray-400 font-medium mb-2"
+              >Application Name</label
+            >
+            <input
+              type="text"
+              id="appName"
+              placeholder="e.g., Instagram, WhatsApp"
+              required
+              class="w-full px-4 py-3 bg-black border-2 border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-white transition-colors"
+            />
+          </div>
+
+          <div class="mb-6 w-full">
+            <label for="category" class="block text-gray-400 font-medium mb-2"
+              >Category</label
+            >
+            <select
+              id="category"
+              required
+              class="w-full px-4 py-3 bg-black border-2 border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-white transition-colors"
+            >
+              <option value="">Select Category</option>
+              <option value="Social Media">Social Media</option>
+              <option value="E-Commerce">E-Commerce</option>
+              <option value="Food Delivery">Food Delivery</option>
+              <option value="Productivity">Productivity</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Finance">Finance</option>
+              <option value="Health & Fitness">Health & Fitness</option>
+              <option value="Education">Education</option>
+              <option value="Travel">Travel</option>
+              <option value="Gaming">Gaming</option>
+              <option value="News">News</option>
+              <option value="Messaging">Messaging</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="mb-6">
+          <label for="maxDepth" class="block text-gray-400 font-medium mb-2">
+            Maximum Exploration Depth:
+            <span id="depthValue" class="text-white">6</span>
+          </label>
+          <input
+            type="range"
+            id="maxDepth"
+            min="3"
+            max="12"
+            value="6"
+            step="1"
+            class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-white"
+          />
+          <div class="flex justify-between text-sm text-gray-500 mt-2">
+            <span>3 (Quick)</span>
+            <span>12 (Deep)</span>
+          </div>
         </div>
 
-        <!-- Progress Panel -->
-        <div class="progress-panel hidden" id="progressPanel">
-            <h2>Testing in Progress...</h2>
-            <div class="progress-bar-container">
-                <div class="progress-bar" id="progressBar"></div>
+        <button
+          class="w-full px-6 py-3 bg-white hover:bg-gray-200 text-black font-semibold rounded-lg border-2 border-white hover:border-gray-200 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+          id="startTestBtn"
+          onclick="startTest()"
+        >
+          Start UX Test
+        </button>
+      </div>
+
+      <!-- Progress Panel -->
+      <div
+        class="bg-zinc-900 p-8 border-2 border-gray-700 rounded-xl hidden"
+        id="progressPanel"
+      >
+        <h2 class="text-2xl font-bold text-white mb-6">
+          Testing in Progress...
+        </h2>
+        <div
+          class="bg-black border-2 border-gray-700 rounded-lg h-3 overflow-hidden mb-4"
+        >
+          <div
+            class="bg-gradient-to-r from-white to-gray-300 h-full transition-all duration-500"
+            id="progressBar"
+            style="width: 0%"
+          ></div>
+        </div>
+        <p class="text-gray-400 text-lg mb-6" id="progressMessage">
+          Initializing...
+        </p>
+
+        <!-- Terminal Log Viewer -->
+        <div
+          class="bg-black border-2 border-gray-700 rounded-lg hover:border-white transition-colors overflow-hidden"
+        >
+          <div
+            class="bg-zinc-900 px-4 py-3 border-b-2 border-gray-700 flex justify-between items-center"
+          >
+            <span class="text-white font-bold text-sm">Execution Logs</span>
+            <div class="flex gap-2">
+              <button
+                id="stopAgentBtn"
+                class="hidden px-3 py-1 border border-red-600 rounded text-red-400 text-sm hover:bg-red-600 hover:text-white hover:border-red-600 transition-all"
+                onclick="stopAgent()"
+              >
+                Stop Agent
+              </button>
+              <button
+                class="px-3 py-1 border border-gray-600 rounded text-gray-400 text-sm hover:bg-white hover:text-black hover:border-white transition-all"
+                onclick="clearLogs()"
+              >
+                Clear
+              </button>
             </div>
-            <p class="progress-message" id="progressMessage">Initializing...</p>
-            
-            <!-- Terminal Log Viewer -->
-            <div class="terminal-container">
-                <div class="terminal-header">
-                    <span class="terminal-title">Execution Logs</span>
-                    <button class="terminal-clear" onclick="clearLogs()">Clear</button>
-                </div>
-                <div class="terminal-output" id="terminalOutput">
-                    <div class="log-entry log-info">
-                        <span class="log-timestamp">[00:00:00]</span>
-                        <span class="log-message">Waiting for test to start...</span>
-                    </div>
-                </div>
+          </div>
+          <div
+            class="max-h-64 overflow-y-auto p-4 font-mono text-sm leading-relaxed"
+            id="terminalOutput"
+          >
+            <div class="mb-2 flex gap-2.5">
+              <span class="text-gray-500 flex-shrink-0">[00:00:00]</span>
+              <span class="text-gray-400">Waiting for test to start...</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Panel -->
+      <div class="hidden" id="resultsPanel">
+        <h2 class="text-2xl font-bold text-white mb-8">UX Analysis Results</h2>
+
+        <!-- Summary Section -->
+        <div
+          class="bg-zinc-900 p-6 border-2 border-gray-700 rounded-xl hover:border-white transition-colors mb-8"
+        >
+          <h3 class="text-xl font-bold text-white mb-4">Executive Summary</h3>
+          <div id="summaryContent" class="text-gray-300 leading-relaxed"></div>
         </div>
 
-        <!-- Results Panel -->
-        <div class="results-panel hidden" id="resultsPanel">
-            <h2>UX Analysis Results</h2>
-            
-            <!-- Summary Section -->
-            <div class="section summary-section">
-                <h3> Executive Summary</h3>
-                <div id="summaryContent" class="content-box"></div>
+        <!-- Metrics Visualization -->
+        <div
+          class="bg-zinc-900 p-6 border-2 border-gray-700 rounded-xl hover:border-white transition-colors mb-8"
+        >
+          <h3 class="text-xl font-bold text-white mb-6">Key Metrics</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-black p-4 border-2 border-gray-600 rounded-lg">
+              <canvas id="depthChart"></canvas>
             </div>
-
-            <!-- Metrics Visualization -->
-            <div class="section metrics-section">
-                <h3>Key Metrics</h3>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <canvas id="depthChart"></canvas>
-                    </div>
-                    <div class="metric-card">
-                        <canvas id="severityChart"></canvas>
-                    </div>
-                    <div class="metric-card">
-                        <canvas id="complexityChart"></canvas>
-                    </div>
-                </div>
+            <div class="bg-black p-4 border-2 border-gray-600 rounded-lg">
+              <canvas id="severityChart"></canvas>
             </div>
-
-            <!-- Positive Findings -->
-            <div class="section positive-section">
-                <h3>Strengths & Good UX Practices</h3>
-                <div id="positiveContent" class="content-box"></div>
+            <div class="bg-black p-4 border-2 border-gray-600 rounded-lg">
+              <canvas id="complexityChart"></canvas>
             </div>
-
-            <!-- Issues Section -->
-            <div class="section issues-section">
-                <h3> UX Issues & Friction Points</h3>
-                <div id="issuesContent" class="content-box"></div>
-            </div>
-
-            <!-- Suggestions Section -->
-            <div class="section suggestions-section">
-                <h3> Improvement Recommendations</h3>
-                <div id="suggestionsContent" class="content-box"></div>
-            </div>
-
-            <!-- Actions -->
-            <div class="actions">
-                <button class="btn-secondary" onclick="downloadReport()">
-                     Download Report
-                </button>
-                <button class="btn-secondary" onclick="resetTest()">
-                     New Test
-                </button>
-            </div>
+          </div>
+          
+          <!-- Additional Stats -->
+          <div id="additionalStats" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
         </div>
+
+        <!-- Positive Findings -->
+        <div
+          class="bg-zinc-900 p-6 border-2 border-gray-700 rounded-xl hover:border-white transition-colors mb-8"
+        >
+          <h3 class="text-xl font-bold text-white mb-4">
+            Strengths & Good UX Practices
+          </h3>
+          <div id="positiveContent" class="text-gray-300 leading-relaxed"></div>
+        </div>
+
+        <!-- Issues Section -->
+        <div
+          class="bg-zinc-900 p-6 border-2 border-gray-700 rounded-xl hover:border-white transition-colors mb-8"
+        >
+          <h3 class="text-xl font-bold text-white mb-4">
+            UX Issues & Friction Points
+          </h3>
+          <div id="issuesContent" class="text-gray-300 leading-relaxed"></div>
+        </div>
+
+        <!-- Suggestions Section -->
+        <div
+          class="bg-zinc-900 p-6 border-2 border-gray-700 rounded-xl hover:border-white transition-colors mb-8"
+        >
+          <h3 class="text-xl font-bold text-white mb-4">
+            Improvement Recommendations
+          </h3>
+          <div
+            id="suggestionsContent"
+            class="text-gray-300 leading-relaxed"
+          ></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4 mb-8">
+          <button
+            class="flex-1 px-6 py-3 bg-zinc-800 hover:bg-white text-gray-200 hover:text-black font-semibold rounded-lg border-2 border-gray-600 hover:border-white transition-all"
+            onclick="downloadReport()"
+          >
+            Download Report
+          </button>
+          <button
+            class="flex-1 px-6 py-3 bg-zinc-800 hover:bg-white text-gray-200 hover:text-black font-semibold rounded-lg border-2 border-gray-600 hover:border-white transition-all"
+            onclick="resetTest()"
+          >
+            New Test
+          </button>
+        </div>
+      </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-</body>
+  </body>
 </html>
